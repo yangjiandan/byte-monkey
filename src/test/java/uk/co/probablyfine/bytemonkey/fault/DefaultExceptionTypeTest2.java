@@ -1,19 +1,15 @@
 package uk.co.probablyfine.bytemonkey.fault;
 
+import java.io.IOException;
+
 import com.ea.agentloader.AgentLoader;
-import org.hamcrest.core.StringContains;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.co.probablyfine.bytemonkey.ByteMonkeyAgent;
-import uk.co.probablyfine.bytemonkey.ByteMonkeyException;
 import uk.co.probablyfine.bytemonkey.testfiles.FaultTestObject;
 
-import java.io.IOException;
-
-import static org.hamcrest.core.StringContains.containsString;
-
-public class DefaultExceptionTypeTest {
+public class DefaultExceptionTypeTest2 {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -22,12 +18,10 @@ public class DefaultExceptionTypeTest {
     public void shouldThrowSomethingIDK() throws IOException {
         AgentLoader.loadAgentClass(
             ByteMonkeyAgent.class.getName(),
-            "mode:fault,filter:uk/co/probablyfine/bytemonkey/testfiles/FaultTestObject/printAndThrowNonPublicException"
+            "mode:fault,filter:uk/co/probablyfine/bytemonkey/testfiles/FaultTestObject/printAndThrowNonPublicException;uk/co/probablyfine/bytemonkey/testfiles/FaultTestObject/printSomething"
         );
-
-        //expectedException.expect(ByteMonkeyException.class);
-        //expectedException.expectMessage(containsString("FaultTestObject$ExceptionWithNoPublicConstructor"));
-
+        expectedException.expect(IOException.class);
         new FaultTestObject().printAndThrowNonPublicException();
+        new FaultTestObject().printSomething();
     }
 }

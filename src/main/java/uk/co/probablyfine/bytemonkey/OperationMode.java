@@ -4,8 +4,11 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.Type;
 import jdk.internal.org.objectweb.asm.tree.*;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Random;
 import java.util.stream.IntStream;
 
 public enum OperationMode {
@@ -56,7 +59,12 @@ public enum OperationMode {
 
             if (exceptionsThrown.size() == 0) return list;
 
-            list.add(new LdcInsnNode(exceptionsThrown.get(0)));
+            int exceptionIndex = random.nextInt(exceptionsThrown.size());
+            String exception = exceptionsThrown.get(exceptionIndex);
+            if (!canAccessConstructor(exception)) {
+                return list;
+            }
+            list.add(new LdcInsnNode(exception));
             list.add(new MethodInsnNode(
                 Opcodes.INVOKESTATIC,
                 "uk/co/probablyfine/bytemonkey/CreateAndThrowException",
@@ -101,10 +109,32 @@ public enum OperationMode {
         }
     };
 
+    private static boolean canAccessConstructor(String exception) {
+        String dotSeparatedClassName = exception.replace("/", ".");
+
+        try {
+            Class<?> p = Class.forName(dotSeparatedClassName, false, ClassLoader.getSystemClassLoader());
+
+            if (Throwable.class.isAssignableFrom(p)) {
+                Constructor constructor = p.getConstructor();
+                if (Modifier.isPublic(constructor.getModifiers())) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static OperationMode fromLowerCase(String mode) {
         return OperationMode.valueOf(mode.toUpperCase());
     }
 
     public abstract InsnList generateByteCode(MethodNode method, AgentArguments arguments);
     public abstract InsnList generateByteCode(TryCatchBlockNode tryCatchBlock, int tcIndex, AgentArguments arguments);
+    private static final Random random = new Random();
 }

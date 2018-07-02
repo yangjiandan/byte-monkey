@@ -1,18 +1,27 @@
 package uk.co.probablyfine.bytemonkey;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class FilterByClassAndMethodName {
 
-    private final Pattern pattern;
+    private final List<Pattern> patterns = new ArrayList();
 
     public FilterByClassAndMethodName(String regex) {
-        this.pattern = Pattern.compile(regex);
+        String[] filters = regex.split(";");
+        for (String filter : filters) {
+            patterns.add(Pattern.compile(filter));
+        }
     }
 
     public boolean matches(String className, String methodName) {
         String fullName = className + "/" + methodName;
-
-        return this.pattern.matcher(fullName).find();
+        for (Pattern p : patterns) {
+            if (p.matcher(fullName).find()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
