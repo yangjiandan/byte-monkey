@@ -25,8 +25,8 @@ public class DefaultExceptionTypeTest {
             "mode:fault,filter:uk/co/probablyfine/bytemonkey/testfiles/FaultTestObject/printAndThrowNonPublicException"
         );
 
-        //expectedException.expect(ByteMonkeyException.class);
-        //expectedException.expectMessage(containsString("FaultTestObject$ExceptionWithNoPublicConstructor"));
+        expectedException.expect(ByteMonkeyException.class);
+        expectedException.expectMessage(containsString("FaultTestObject$ExceptionWithNoPublicConstructor"));
 
         new FaultTestObject().printAndThrowNonPublicException();
     }

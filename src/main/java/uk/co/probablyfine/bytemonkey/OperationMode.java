@@ -6,9 +6,11 @@ import jdk.internal.org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.StringJoiner;
 import java.util.stream.IntStream;
 
 public enum OperationMode {
@@ -59,12 +61,7 @@ public enum OperationMode {
 
             if (exceptionsThrown.size() == 0) return list;
 
-            int exceptionIndex = random.nextInt(exceptionsThrown.size());
-            String exception = exceptionsThrown.get(exceptionIndex);
-            if (!canAccessConstructor(exception)) {
-                return list;
-            }
-            list.add(new LdcInsnNode(exception));
+            list.add(new LdcInsnNode(exceptionsThrown.get(0)));
             list.add(new MethodInsnNode(
                 Opcodes.INVOKESTATIC,
                 "uk/co/probablyfine/bytemonkey/CreateAndThrowException",
@@ -79,8 +76,48 @@ public enum OperationMode {
         }
         @Override
         public InsnList generateByteCode(TryCatchBlockNode tryCatchBlock, int tcIndex, AgentArguments arguments) {
-        	// won't use this method
-        	return null;
+            // won't use this method
+            return null;
+        }
+    },
+    RANDOMFAULT {
+        @Override
+        public InsnList generateByteCode(MethodNode method, AgentArguments arguments) {
+            final List<String> exceptionsThrown = method.exceptions;
+
+            InsnList list = new InsnList();
+
+            if (exceptionsThrown.size() == 0) return list;
+
+            List<String> validException = new ArrayList();
+            for (String e : exceptionsThrown) {
+                if (OperationMode.canAccessConstructor(e)) {
+                    validException.add(e);
+                }
+            }
+            if (validException.isEmpty()) {
+                return list;
+            }
+
+            String exceptionStr = String.join(",", validException);
+
+            list.add(new LdcInsnNode(exceptionStr));
+            list.add(new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                "uk/co/probablyfine/bytemonkey/CreateAndThrowException",
+                "throwRandomException",
+                "(Ljava/lang/String;)Ljava/lang/Throwable;",
+                false // this is not a method on an interface
+            ));
+
+            list.add(new InsnNode(Opcodes.ATHROW));
+
+            return list;
+        }
+        @Override
+        public InsnList generateByteCode(TryCatchBlockNode tryCatchBlock, int tcIndex, AgentArguments arguments) {
+            // won't use this method
+            return null;
         }
     },
     NULLIFY {
