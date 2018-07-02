@@ -36,8 +36,6 @@ public class CreateAndThrowException {
     public static Throwable throwRandomException(String name) {
         String[] exception = name.split(",");
         int exceptionIndex = random.nextInt(exception.length);
-        System.out.println("exceptions" + name);
-        System.out.println("exception_index=" + exceptionIndex);
         String selectedException = exception[exceptionIndex];
         
         String dotSeparatedClassName = selectedException.replace("/", ".");
